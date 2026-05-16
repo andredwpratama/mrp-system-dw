@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  forecastResult  ForecastResult?
+  aggregateResult AggregateResult?
+  mrpResult       MrpResult?
+  mpsResult       MpsResult?
+  rccpResult      RccpResult?
+  crpResult       CrpResult?
+  pacEntries      PacEntry[]
+
+  @@index([userId])
+}
+
+model DemandData {
+  id        String   @id @default(cuid())
+  sessionId String
+  period    Int
+  label     String
+  value     Float
+  createdAt DateTime @default(now())
+
+  @@unique([sessionId, period])
+  @@index([sessionId])
+}
+
+model ForecastResult {
+  id              String   @id @default(cuid())
+  sessionId       String   @unique
+  session         Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  bestMethod      String
+  maeValue        Float
+  mseValue        Float
+  mapeValue       Float
+  futureForecasts Json
+  params          Json
+  createdAt       DateTime @default(now())
+}
+
+model AggregateResult {
+  id             String   @id @default(cuid())
+  sessionId      String   @unique
+  session        Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  chosenStrategy String
+  weeklyPlan     Json
+  totalCost      Float
+  createdAt      DateTime @default(now())
+}
+
+model MpsResult {
+  id        String   @id @default(cuid())
+  sessionId String   @unique
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  rows      Json
+  createdAt DateTime @default(now())
+}
+
+model RccpResult {
+  id             String   @id @default(cuid())
+  sessionId      String   @unique
+  session        Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  rows           Json
+  avgUtilization Float
+  createdAt      DateTime @default(now())
+}
+
+model MrpResult {
+  id           String   @id @default(cuid())
+  sessionId    String   @unique
+  session      Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  bestMethod   String
+  lflRows      Json
+  eoqRows      Json
+  poqRows      Json
+  fprRows      Json
+  lflTotalCost Float
+  eoqTotalCost Float
+  poqTotalCost Float
+  fprTotalCost Float
+  createdAt    DateTime @default(now())
+}
+
+model CrpResult {
+  id           String   @id @default(cuid())
+  sessionId    String   @unique
+  session      Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  fermentation Json
+  packaging    Json
+  createdAt    DateTime @default(now())
+}
+
+model PacEntry {
+  id              String   @id @default(cuid())
+  sessionId       String
+  session         Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  batchCode       String
+  batchDate       DateTime
+  inputGrams      Float
+  outputGrams     Float
+  estimatedOutput Float
+  conversionRate  Float
+  status          String
+  notes           String?
+  createdAt       DateTime @default(now())
+
+  @@index([sessionId])
+}
